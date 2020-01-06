@@ -5,7 +5,7 @@ ply is spaghetti code mess that allows for quick, easy playback of local video f
   * Add support for ".5" Episodes
   * The ability to convert a folder of file into a standardized format
   * Expanding the variablies in the JSON file to include: resolution, series description, episode count, and MAL-link
-  * Windows Support
+  * Windows Compatability
   * The ability to invoke other video players
 
 ### Other Potential features
