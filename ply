@@ -2,7 +2,7 @@
 
 import os, re, json
 
-validExt = ['.mkv','.mp4','.avi']
+validExt = ['.mkv','.mp4','.avi','.m4v']
 
 #TODO: Add flags for non-updating runs, decrementing the episode counter, manually setting the episode counter, setting to indexing mode
 #TODO: Add functionality to increment into .5 episodes
@@ -23,7 +23,7 @@ def isValidFile( filename ):
             return True
     return False
 
-def createCompl(): #creates the complete.json file to keep track of episodes
+def createCompl( epNum = None ): #creates the complete.json file to keep track of episodes
     try:
         compX = open("complete.json", 'x')
         compW = open("complete.json", "w")
@@ -32,6 +32,8 @@ def createCompl(): #creates the complete.json file to keep track of episodes
             baseCompl['Episode'] = int(oldCompl.read())
             oldCompl.close()
             os.remove("complete")
+        if epNum != None:
+            baseCompl['Episode'] = int(epNum) - 1
         compW.write(json.dumps(baseCompl, indent = 4))
         compW.close()
         return True
@@ -108,21 +110,20 @@ files = [f for f in os.listdir() if os.path.isfile(f)]
 
 validFiles = []
 for item in files:
-    #print(item + " ext:" + getExt(item))
     if (isValidFile(item)):
         validFiles.append(item)
+validFiles.sort()
 
 #for files in validFiles:
 #    print(files)
-#print(os.getcwd())
 
-#for i in validFiles:
-#    print(getSubberName(i))
-
-
-createCompl()
-complJson = getComplJson()
 sampleFile = validFiles[0]
+if isStandard(sampleFile) and not os.path.isfile("complete.json"):
+    if int(getEpisodeNumber(sampleFile)) > 1:
+        print("WARNING: Episode count does not start at 1!\nSetting starting Episode at "+getEpisodeNumber(sampleFile)+".\nIf this is in error, please manually adjust in complete.json and/or set UsePosIndex to True.")
+    createCompl(int(getEpisodeNumber(sampleFile)))
+
+complJson = getComplJson()
 if complJson['Anime'] == None and complJson['UsePosIndex'] == False:
     if isStandard(sampleFile):
         complJson['Subber'] = getSubberName(sampleFile)
