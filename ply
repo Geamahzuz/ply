@@ -25,7 +25,7 @@ def createCompl( epNum = None ): #creates the complete.json file to keep track o
         compW = open("complete.json", "w")
         if os.path.isfile("complete"): #converts old complete file to json format
             oldCompl = open("complete", 'r')
-            baseCompl['Episode'] = int(oldCompl.read())
+            epNum = int(oldCompl.read()) + 1
             oldCompl.close()
             os.remove("complete")
         if epNum != None:
