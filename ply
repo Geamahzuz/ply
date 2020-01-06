@@ -4,10 +4,6 @@ import os, re, json
 
 validExt = ['.mkv','.mp4','.avi','.m4v']
 
-#TODO: Add flags for non-updating runs, decrementing the episode counter, manually setting the episode counter, setting to indexing mode
-#TODO: Add functionality to increment into .5 episodes
-#TODO: Add functionality to convert episodes into the standard format (Probably via the indexing method)
-
 def getExt( filename ):
     basestring = str( filename )
     extension = ''
