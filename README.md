@@ -1,5 +1,5 @@
 # ply
-ply is spaghetti code mess that allows for quick, easy playback of local files. The current main focus is on playback and tracking of anime files.
+ply is spaghetti code mess that allows for quick, easy playback of local video files. The current main focus is on playback and tracking of anime files.
 
 ### Planned features (in no particular order)
   * Add support for ".5" Episodes
