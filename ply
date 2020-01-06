@@ -7,7 +7,6 @@ validExt = ['.mkv','.mp4','.avi']
 #TODO: Add flags for non-updating runs, decrementing the episode counter, manually setting the episode counter, setting to indexing mode
 #TODO: Add functionality to increment into .5 episodes
 #TODO: Add functionality to convert episodes into the standard format (Probably via the indexing method)
-#TODO: (Bug) Program does not currently detect the lowest episode in a folder and automatically sets it to episode 1 (With standard format) | Create a funcition to detect the lowest numbered episode
 
 def getExt( filename ):
     basestring = str( filename )
