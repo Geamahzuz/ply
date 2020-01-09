@@ -50,49 +50,59 @@ def getComplJson():
         return getComplJson()
 
 def isStandard( filename ): #Checks to see if a filename matches the standard layout
-    if re.search("\[.*\].* - \d{1,3}.*\..*", filename) is None:
-        return False
+    if re.search("\[(.*)\] (.*) - (\d{1,3}\.?5?) \[(\d{1,4}[p,K,k])\]\.(.*)", filename) is None:
+        #print("Failed to Match: "+filename)
+        return False, None
     else:
-        return True
+        standardMatch = re.match("\[(.*)\] (.*) - (\d{1,3}\.?5?) \[(\d{1,4}[p,K,k])\]\.(.*)", filename)
+        #setBaseCompl( standardMatch )
+        return True, standardMatch
+
+def setBaseCompl( match ):
+    baseCompl["Subber"] = match.group(1)
+    baseCompl["Anime"] = match.group(2)
+    baseCompl["Episode"] = float(match.group(3))
+    baseCompl["Resolution"] = match.group(4)
 
 def getSeriesTitle( filename ): #gets the title of a series for standard formatted shows
-    strArray = re.split("(\W+)", filename)
-    #print(strArray)
-    title = None
-    recFlag = False
-    for index in strArray:
-        if index == ' - ':
-            recFlag = False
-            break
-        if recFlag:
-            try: 
-                title = title + index
-            except TypeError: #Avoid Issues when concatenating on a NoneType and avoid pre-string whitespace
-                title = index
-        if index == '] ':
-            recFlag = True
-    return title
+    bool, matchReg = isStandard( filename )
+    return matchReg.group(2)
 
 def getEpisodeNumber( filename ): #gets the episode number for standard formatted shows
-    trimStr = [0]
-    for character in range(0, len(filename)):
-        if filename[character:character + 3] == ' - ':
-            trimStr = filename[character + 3:]
-            break
-    epNum = trimStr.split(' ')
-    return epNum[0]
+    matchReg = 0.0
+    bool, matchReg = isStandard( filename )
+    #print("MatchReg: "+str(matchReg.group(3)))
+    return float(matchReg.group(3))
 
 def getSubberName( filename ):
-    strArray = filename.split()
-    subber = strArray[0]
-    return subber[1:len(subber)-1]
+    bool, matchReg = isStandard( filename )
+    return matchReg.group(1)
+
+def getExtension( filename ):
+    bool, matchReg = isStandard( filename )
+    return matchReg.group(5)
+
+def getResolution( filename ):
+    bool, matchReg = isStandard( filename )
+    return matchReg.group(4)
+
+def constructStandard(subber, anime, episode, resolution, extension):
+    return '['+subber+'] '+anime+' - '+str(episode)+' ['+resolution+'].'+extension
 
 def getNextEpisode( jsonFile ):
-    epNum = int(jsonFile['Episode'])
-    epNum = epNum + 1
-    if epNum < 10:
-        epNum = "0"+str(epNum)
-    return '[' + jsonFile['Subber'] + '] ' + jsonFile['Anime'] + ' - ' + str(epNum)
+    global validFiles
+    sample = validFiles[0]
+    ext = getExtension(sample)
+    currEp = float(jsonFile["Episode"])
+    #print('isInteger: '+str(currEp.is_integer()))
+    if currEp.is_integer():
+        if os.path.isfile(constructStandard(jsonFile["Subber"], jsonFile["Anime"],str(currEp+0.5).zfill(4),jsonFile["Resolution"],ext)):
+            return constructStandard(jsonFile["Subber"], jsonFile["Anime"],str(currEp+0.5).zfill(4),jsonFile["Resolution"],ext)
+        elif os.path.isfile(constructStandard(jsonFile["Subber"], jsonFile["Anime"],str(int(currEp+1)).zfill(2),jsonFile["Resolution"],ext)):
+            return constructStandard(jsonFile["Subber"], jsonFile["Anime"],str(int(currEp+1)).zfill(2),jsonFile["Resolution"],ext)
+    else:
+        return constructStandard(jsonFile["Subber"], jsonFile["Anime"],str(int(currEp+0.5)).zfill(2),jsonFile["Resolution"],ext)
+
 
 baseCompl = {
     "Subber": None,
@@ -109,28 +119,44 @@ validFiles = []
 for item in files:
     if isValidFile(item):
         validFiles.append(item)
-validFiles.sort()
+
+
+if isStandard(validFiles[0]): #Sorts the list by the numerical value of each episode
+    unSortedFiles = []
+    for item in validFiles:
+        unSortedFiles.append(getEpisodeNumber(item))
+    unSortedFiles.sort()
+    for num in unSortedFiles:
+        for ep in validFiles:
+            if num == getEpisodeNumber(ep):
+                validFiles.insert(unSortedFiles.index(num),validFiles.pop(validFiles.index(ep)))
+else:
+    validFiles.sort()
+
 
 #for files in validFiles:
-#    print(files)
+#    bool, yomom = isStandard(files)
+#    print(constructStandard(yomom.group(1),yomom.group(2),yomom.group(3),yomom.group(4),yomom.group(5)))
+
 
 sampleFile = validFiles[0]
+
 if isStandard(sampleFile) and not os.path.isfile("complete.json"):
     if int(getEpisodeNumber(sampleFile)) > 1:
-        print("WARNING: Episode count does not start at 1!\nSetting starting Episode at "+getEpisodeNumber(sampleFile)+".\nIf this is in error, please manually adjust in complete.json and/or set UsePosIndex to True.")
-    createCompl(int(getEpisodeNumber(sampleFile)))
+        print("WARNING: Episode count does not start at 1!\nSetting starting Episode at "+str(getEpisodeNumber(sampleFile))+".\nIf this is in error, please manually adjust in complete.json and/or set UsePosIndex to True.")
+    createCompl(float(getEpisodeNumber(sampleFile)))
 
 complJson = getComplJson()
 if complJson['Anime'] is None and complJson['UsePosIndex'] == False:
     if isStandard(sampleFile):
         complJson['Subber'] = getSubberName(sampleFile)
         complJson['Anime'] = getSeriesTitle(sampleFile)
+        complJson['Resolution'] = getResolution(sampleFile)
         complJson['UsePosIndex'] = False
         updateComplJson(complJson)
         complJson = getComplJson()
     else:
         complJson['UsePosIndex'] = True
-        updateComplJson(complJson)
 
 if complJson['UsePosIndex']:
     if complJson['Episode'] >= len(validFiles):
@@ -141,15 +167,15 @@ if complJson['UsePosIndex']:
         complJson['Episode'] = complJson['Episode'] + 1
         updateComplJson(complJson)
 else:
-    lastEpisode = 0
-    for i in validFiles:
-        if float(getEpisodeNumber(i)) > lastEpisode:
-            lastEpisode = float(getEpisodeNumber(i))
-    if int(complJson['Episode'])+1 > lastEpisode:
+    try:
+        nextEp = os.path.isfile(getNextEpisode(complJson))
+    except TypeError:
+        nextEp = None
+
+    if nextEp is None:
         print("There are no more valid files to be played.")
     else:
         print("Now Playing "+getNextEpisode(complJson))
         os.system("mpv "+' --really-quiet '+"'"+getNextEpisode(complJson)+"'*")
-        complJson['Episode'] = complJson['Episode'] + 1
+        complJson['Episode'] = getEpisodeNumber(getNextEpisode(complJson))
         updateComplJson(complJson)
-
