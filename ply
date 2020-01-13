@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser(description="Play some anime my dude",)
 parser.add_argument("-n","--no-update", help="Prevents updating of complete.json", action="store_true")
 parser.add_argument("-e","--episode", help="Play a specified episode", nargs=1, metavar="FILE", default=[None])
 args = parser.parse_args()
-print(vars(args))
+#print(vars(args))
 #print(args.episode[0])
 
 validExt = ['.mkv','.mp4','.avi','.m4v']
