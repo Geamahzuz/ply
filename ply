@@ -63,7 +63,6 @@ def isStandard( filename ): #Checks to see if a filename matches the standard la
         return False, None
     else:
         standardMatch = re.match("\[(.*)\] (.*) - (\d{1,3}\.?5?) \[(\d{1,4}[p,K,k])\]\.(.*)", filename)
-        #setBaseCompl( standardMatch )
         return True, standardMatch
 
 def setBaseCompl( match ):
@@ -128,8 +127,7 @@ for item in files:
     if isValidFile(item):
         validFiles.append(item)
 
-
-if isStandard(validFiles[0]): #Sorts the list by the numerical value of each episode
+if isStandard(validFiles[0])[0]: #Sorts the list by the numerical value of each episode
     unSortedFiles = []
     for item in validFiles:
         unSortedFiles.append(getEpisodeNumber(item))
@@ -153,19 +151,19 @@ if args.episode[0] is not None:
     #print(args.episode[0])
     print("Now Playing " + args.episode[0])
     os.system("mpv " + ' --really-quiet ' + "'" + args.episode[0]+"'")
-    if isStandard(args.episode[0]):
+    if isStandard(args.episode[0])[0]:
         complJson = getComplJson()
         complJson['Episode'] = getEpisodeNumber(args.episode[0])
         updateComplJson(complJson)
 else:
-    if isStandard(sampleFile) and not os.path.isfile("complete.json"):
+    if isStandard(sampleFile)[0] and not os.path.isfile("complete.json"):
         if int(getEpisodeNumber(sampleFile)) > 1:
             print("WARNING: Episode count does not start at 1!\nSetting starting Episode at "+str(getEpisodeNumber(sampleFile))+".\nIf this is in error, please manually adjust in complete.json and/or set UsePosIndex to True.")
         createCompl(float(getEpisodeNumber(sampleFile)))
 
     complJson = getComplJson()
     if complJson['Anime'] is None and complJson['UsePosIndex'] == False:
-        if isStandard(sampleFile):
+        if isStandard(sampleFile)[0]:
             complJson['Subber'] = getSubberName(sampleFile)
             complJson['Anime'] = getSeriesTitle(sampleFile)
             complJson['Resolution'] = getResolution(sampleFile)
@@ -179,8 +177,8 @@ else:
         if complJson['Episode'] >= len(validFiles):
             print("There are no more valid file to be played.")
         else:
-            print("Now Playing " + validFiles[complJson["Episode"]] + " ...")
-            os.system("mpv "+' --really-quiet "'+validFiles[complJson['Episode']]+'"')
+            print("Now Playing " + validFiles[int(complJson["Episode"])] + " ...")
+            os.system("mpv "+' --really-quiet "'+validFiles[int(complJson['Episode'])]+'"')
             complJson['Episode'] = complJson['Episode'] + 1
             updateComplJson(complJson)
     else:
