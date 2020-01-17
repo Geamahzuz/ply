@@ -150,10 +150,14 @@ sampleFile = validFiles[0]
 if args.episode[0] is not None:
     #print(args.episode[0])
     print("Now Playing " + args.episode[0])
-    os.system("mpv " + ' --really-quiet ' + "'" + args.episode[0]+"'")
+    os.system("mpv " + ' --really-quiet "' + args.episode[0]+'"')
     if isStandard(args.episode[0])[0]:
         complJson = getComplJson()
         complJson['Episode'] = getEpisodeNumber(args.episode[0])
+        updateComplJson(complJson)
+    else:
+        complJson = getComplJson()
+        complJson['Episode'] = int(validFiles.index(args.episode[0])+1)
         updateComplJson(complJson)
 else:
     if isStandard(sampleFile)[0] and not os.path.isfile("complete.json"):
