@@ -151,11 +151,11 @@ for item in files:
         validFiles.append(item)
 
 if args.convert:  # TODO: Finish this garbage
-    print("BOOM")
+    #print("BOOM")
    # '''
     validFiles.sort()
     autoYesFlag = True
-    print("Convert Flag set to True")
+    #print("Convert Flag set to True")
     print("First Episode in index: " + validFiles[0])
     subber = input("Subber: ")
     animeTitle = input("Series Title: ")
@@ -183,6 +183,8 @@ if args.convert:  # TODO: Finish this garbage
     epNum = float(startEp)
     converterList = []
     for file in validFiles:
+        if epNum is None:
+            break
         epNum = getEpReg(epNum, file)
         if epNum is None: #skipping episodes that Errored
             continue
