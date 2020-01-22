@@ -192,7 +192,7 @@ if args.convert:  # TODO: Finish this garbage
             epNumStr = str(epNum).zfill(4)
 
         if autoYesFlag:
-            print(file + " > " + constructStandard(subber, animeTitle, epNumStr, res, getExt(file)[1:]))
+            #print(file + " > " + constructStandard(subber, animeTitle, epNumStr, res, getExt(file)[1:]))
             converterList.append((file, constructStandard(subber, animeTitle, epNumStr, res, getExt(file)[1:])))
 
         if float(epNum).is_integer():
