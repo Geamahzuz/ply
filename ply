@@ -1,114 +1,137 @@
 #!/usr/bin/env python3
 
-import os, re, json, argparse
+import argparse
+import json
+import os
+import re
 
-parser = argparse.ArgumentParser(description="Play some anime my dude",)
-parser.add_argument("-n","--no-update", help="Prevents updating of complete.json", action="store_true")
-parser.add_argument("-e","--episode", help="Play a specified episode", nargs=1, metavar="FILE", default=[None])
+parser = argparse.ArgumentParser(description="Play some anime my dude", )
+parser.add_argument("-n", "--no-update", help="Prevents updating of complete.json", action="store_false")
+parser.add_argument("-e", "--episode", help="Play a specified episode", nargs=1, metavar="FILE", default=[None])
+parser.add_argument('-c', '--convert', help="Converts episodes into a recognized format", action="store_true")
 args = parser.parse_args()
-#print(vars(args))
-#print(args.episode[0])
+# print(vars(args))
+# print(args.episode[0])
 
-validExt = ['.mkv','.mp4','.avi','.m4v']
+validExt = ['.mkv', '.mp4', '.avi', '.m4v']
 
-def getExt( filename ):
-    basestring = str( filename )
+
+def getExt(filename):
+    basestring = str(filename)
     extension = ''
-    for chara in range(len(basestring)-1, 0, -1):
+    for chara in range(len(basestring) - 1, 0, -1):
         if basestring[chara] == '.':
             extension = basestring[chara:]
             return extension
     return extension
 
-def isValidFile( filename ):
+
+def isValidFile(filename):
     for ext in validExt:
         if getExt(filename) == ext:
             return True
     return False
 
-def createCompl( epNum = None ): #creates the complete.json file to keep track of episodes
+
+def createCompl(epNum=None):  # creates the complete.json file to keep track of episodes
     try:
         compW = open("complete.json", "w")
-        if os.path.isfile("complete"): #converts old complete file to json format
+        if os.path.isfile("complete"):  # converts old complete file to json format
             oldCompl = open("complete", 'r')
             epNum = int(oldCompl.read()) + 1
             oldCompl.close()
             os.remove("complete")
         if epNum is not None:
             baseCompl['Episode'] = int(epNum) - 1
-        compW.write(json.dumps(baseCompl, indent = 4))
+        compW.write(json.dumps(baseCompl, indent=4))
         compW.close()
         return True
     except:
         return False
 
-def updateComplJson( jsonFile ):
-    if not args.no_update:
+
+def updateComplJson(jsonFile):
+    if args.no_update:
         compW = open("complete.json", "w")
-        compW.write(json.dumps(jsonFile, indent = 4))
+        compW.write(json.dumps(jsonFile, indent=4))
         compW.close()
+
 
 def getComplJson():
     try:
-        compR = open("complete.json","r")
+        compR = open("complete.json", "r")
         compFile = compR.read()
         return json.loads(compFile)
     except:
         createCompl()
         return getComplJson()
 
-def isStandard( filename ): #Checks to see if a filename matches the standard layout
+
+def isStandard(filename):  # Checks to see if a filename matches the standard layout
     if re.search("\[(.*)\] (.*) - (\d{1,3}\.?5?) \[(\d{1,4}[p,K,k])\]\.(.*)", filename) is None:
-        #print("Failed to Match: "+filename)
+        # print("Failed to Match: "+filename)
         return False, None
     else:
         standardMatch = re.match("\[(.*)\] (.*) - (\d{1,3}\.?5?) \[(\d{1,4}[p,K,k])\]\.(.*)", filename)
         return True, standardMatch
 
-def setBaseCompl( match ):
+
+def setBaseCompl(match):
     baseCompl["Subber"] = match.group(1)
     baseCompl["Anime"] = match.group(2)
     baseCompl["Episode"] = float(match.group(3))
     baseCompl["Resolution"] = match.group(4)
 
-def getSeriesTitle( filename ): #gets the title of a series for standard formatted shows
-    bool, matchReg = isStandard( filename )
+
+def getSeriesTitle(filename):  # gets the title of a series for standard formatted shows
+    _, matchReg = isStandard(filename)
     return matchReg.group(2)
 
-def getEpisodeNumber( filename ): #gets the episode number for standard formatted shows
+
+def getEpisodeNumber(filename):  # gets the episode number for standard formatted shows
     matchReg = 0.0
-    bool, matchReg = isStandard( filename )
-    #print("MatchReg: "+str(matchReg.group(3)))
+    _, matchReg = isStandard(filename)
+    # print("MatchReg: "+str(matchReg.group(3)))
     return float(matchReg.group(3))
 
-def getSubberName( filename ):
-    bool, matchReg = isStandard( filename )
+
+def getSubberName(filename):
+    _, matchReg = isStandard(filename)
     return matchReg.group(1)
 
-def getExtension( filename ):
-    bool, matchReg = isStandard( filename )
+
+def getExtension(filename):
+    _, matchReg = isStandard(filename)
     return matchReg.group(5)
 
-def getResolution( filename ):
-    bool, matchReg = isStandard( filename )
+
+def getResolution(filename):
+    _, matchReg = isStandard(filename)
     return matchReg.group(4)
 
-def constructStandard(subber, anime, episode, resolution, extension):
-    return '['+subber+'] '+anime+' - '+str(episode)+' ['+resolution+'].'+extension
 
-def getNextEpisode( jsonFile ):
+def constructStandard(subber, anime, episode, resolution, extension):
+    return '[' + subber + '] ' + anime + ' - ' + str(episode) + ' [' + resolution + '].' + extension
+
+
+def getNextEpisode(jsonFile):
     global validFiles
     sample = validFiles[0]
     ext = getExtension(sample)
     currEp = float(jsonFile["Episode"])
-    #print('isInteger: '+str(currEp.is_integer()))
+    # print('isInteger: '+str(currEp.is_integer()))
     if currEp.is_integer():
-        if os.path.isfile(constructStandard(jsonFile["Subber"], jsonFile["Anime"],str(currEp+0.5).zfill(4),jsonFile["Resolution"],ext)):
-            return constructStandard(jsonFile["Subber"], jsonFile["Anime"],str(currEp+0.5).zfill(4),jsonFile["Resolution"],ext)
-        elif os.path.isfile(constructStandard(jsonFile["Subber"], jsonFile["Anime"],str(int(currEp+1)).zfill(2),jsonFile["Resolution"],ext)):
-            return constructStandard(jsonFile["Subber"], jsonFile["Anime"],str(int(currEp+1)).zfill(2),jsonFile["Resolution"],ext)
+        if os.path.isfile(constructStandard(jsonFile["Subber"], jsonFile["Anime"], str(currEp + 0.5).zfill(4),
+                                            jsonFile["Resolution"], ext)):
+            return constructStandard(jsonFile["Subber"], jsonFile["Anime"], str(currEp + 0.5).zfill(4),
+                                     jsonFile["Resolution"], ext)
+        elif os.path.isfile(constructStandard(jsonFile["Subber"], jsonFile["Anime"], str(int(currEp + 1)).zfill(2),
+                                              jsonFile["Resolution"], ext)):
+            return constructStandard(jsonFile["Subber"], jsonFile["Anime"], str(int(currEp + 1)).zfill(2),
+                                     jsonFile["Resolution"], ext)
     else:
-        return constructStandard(jsonFile["Subber"], jsonFile["Anime"],str(int(currEp+0.5)).zfill(2),jsonFile["Resolution"],ext)
+        return constructStandard(jsonFile["Subber"], jsonFile["Anime"], str(int(currEp + 0.5)).zfill(2),
+                                 jsonFile["Resolution"], ext)
 
 
 baseCompl = {
@@ -127,7 +150,73 @@ for item in files:
     if isValidFile(item):
         validFiles.append(item)
 
-if isStandard(validFiles[0])[0]: #Sorts the list by the numerical value of each episode
+if args.convert:  # TODO: Finish this garbage
+    print("BOOM")
+   # '''
+    validFiles.sort()
+    autoYesFlag = True
+    print("Convert Flag set to True")
+    print("First Episode in index: " + validFiles[0])
+    subber = input("Subber: ")
+    animeTitle = input("Series Title: ")
+    while True:
+        startEp = input("Starting Episode: ")
+        if re.match('\d{1,4}\.?5?', startEp) is not None:
+            break
+        else:
+            print("Invalid format supplied ex: 01, 10, 12.5, etc...")
+    while True:
+        res = input("Resolution: ")
+        if re.match("\d{1,4}[p,K,k]", res) is not None:
+            break
+        else:
+            print("Invalid format supplied ex: 1080p, 720p, 4K, etc...")
+    def getEpReg(expectedEpisode, filename):  # Attempting to regex the episode number based on the user's starting episode input with respect to .5 episodes
+        expectedEpisode = float(expectedEpisode)
+        if re.search(str(int(expectedEpisode)), filename) is not None:
+            return expectedEpisode
+        if re.search(str(expectedEpisode - 0.5), filename) is not None:
+            return expectedEpisode - 0.5
+        else:
+            print("Error: "+filename, "Episode Number Not Found! Skipping...", sep='\n')
+
+    epNum = float(startEp)
+    converterList = []
+    for file in validFiles:
+        epNum = getEpReg(epNum, file)
+        if epNum is None: #skipping episodes that Errored
+            continue
+        if epNum.is_integer(): # Providing the proper amount of leading zeroes
+            epNumStr = str(int(epNum)).zfill(2)
+        else:
+            epNumStr = str(epNum).zfill(4)
+
+        if autoYesFlag:
+            print(file + " > " + constructStandard(subber, animeTitle, epNumStr, res, getExt(file)[1:]))
+            converterList.append((file, constructStandard(subber, animeTitle, epNumStr, res, getExt(file)[1:])))
+
+        if float(epNum).is_integer():
+            epNum += 1
+        else:
+            epNum += 0.5
+    for filename in converterList:
+        print(filename[0], filename[1], sep='  >  ')
+
+    confirm = input("Confirm Changes?(Y/n)") or 'y'
+    while not confirm == 'y' and not confirm == 'Y' and not confirm == 'n':
+        confirm = input("Confirm Changes?(Y/n)")
+    if confirm == 'n':
+        print('Process aborted by user') #TODO: Expand to include individual editing based on index
+        quit()
+    else:
+        for filename in converterList:
+            os.system("mv '"+filename[0]+"' '"+filename[1]+"'")
+            print("Done!")
+        quit()
+    # '''
+    quit()
+
+if isStandard(validFiles[0])[0]:  # Sorts the list by the numerical value of each episode
     unSortedFiles = []
     for item in validFiles:
         unSortedFiles.append(getEpisodeNumber(item))
@@ -135,12 +224,11 @@ if isStandard(validFiles[0])[0]: #Sorts the list by the numerical value of each 
     for num in unSortedFiles:
         for ep in validFiles:
             if num == getEpisodeNumber(ep):
-                validFiles.insert(unSortedFiles.index(num),validFiles.pop(validFiles.index(ep)))
+                validFiles.insert(unSortedFiles.index(num), validFiles.pop(validFiles.index(ep)))
 else:
     validFiles.sort()
 
-
-#for files in validFiles:
+# for files in validFiles:
 #    bool, yomom = isStandard(files)
 #    print(constructStandard(yomom.group(1),yomom.group(2),yomom.group(3),yomom.group(4),yomom.group(5)))
 
@@ -148,21 +236,22 @@ else:
 sampleFile = validFiles[0]
 
 if args.episode[0] is not None:
-    #print(args.episode[0])
+    # print(args.episode[0])
     print("Now Playing " + args.episode[0])
-    os.system("mpv " + ' --really-quiet "' + args.episode[0]+'"')
+    os.system("mpv " + ' --really-quiet "' + args.episode[0] + '"')
     if isStandard(args.episode[0])[0]:
         complJson = getComplJson()
         complJson['Episode'] = getEpisodeNumber(args.episode[0])
         updateComplJson(complJson)
     else:
         complJson = getComplJson()
-        complJson['Episode'] = int(validFiles.index(args.episode[0])+1)
+        complJson['Episode'] = int(validFiles.index(args.episode[0]) + 1)
         updateComplJson(complJson)
 else:
     if isStandard(sampleFile)[0] and not os.path.isfile("complete.json"):
         if int(getEpisodeNumber(sampleFile)) > 1:
-            print("WARNING: Episode count does not start at 1!\nSetting starting Episode at "+str(getEpisodeNumber(sampleFile))+".\nIf this is in error, please manually adjust in complete.json and/or set UsePosIndex to True.")
+            print("WARNING: Episode count does not start at 1!\nSetting starting Episode at " + str(getEpisodeNumber(
+                sampleFile)) + ".\nIf this is in error, please manually adjust in complete.json and/or set UsePosIndex to True.")
         createCompl(float(getEpisodeNumber(sampleFile)))
 
     complJson = getComplJson()
@@ -182,7 +271,7 @@ else:
             print("There are no more valid file to be played.")
         else:
             print("Now Playing " + validFiles[int(complJson["Episode"])] + " ...")
-            os.system("mpv "+' --really-quiet "'+validFiles[int(complJson['Episode'])]+'"')
+            os.system("mpv " + ' --really-quiet "' + validFiles[int(complJson['Episode'])] + '"')
             complJson['Episode'] = complJson['Episode'] + 1
             updateComplJson(complJson)
     else:
@@ -194,7 +283,7 @@ else:
         if nextEp is None:
             print("There are no more valid files to be played.")
         else:
-            print("Now Playing "+getNextEpisode(complJson))
-            os.system("mpv "+' --really-quiet '+"'"+getNextEpisode(complJson)+"'*")
+            print("Now Playing " + getNextEpisode(complJson))
+            os.system("mpv " + ' --really-quiet ' + "'" + getNextEpisode(complJson) + "'*")
             complJson['Episode'] = getEpisodeNumber(getNextEpisode(complJson))
             updateComplJson(complJson)
