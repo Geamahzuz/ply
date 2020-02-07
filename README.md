@@ -9,6 +9,7 @@ ply is spaghetti code mess that allows for quick, easy playback of local video f
   * The ability to invoke other video players
   * Add support for OVAs and ONAs
   * Add support for multiple filename formats (i.e. "[Subber] Title - EpisodeNumber [Resolution].extension", "Title - EpisodeNumber.extension", ...)
+  * Add support for custom regex
 
 ### Other Potential features
   * support for comicbook archives (.cbz, .cbr, etc.) to keep track of manga
