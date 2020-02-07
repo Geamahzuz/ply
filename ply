@@ -286,6 +286,6 @@ else:
             print("There are no more valid files to be played.")
         else:
             print("Now Playing " + getNextEpisode(complJson))
-            os.system("mpv " + ' --really-quiet ' + "'" + getNextEpisode(complJson) + "'*")
+            os.system("mpv " + ' --really-quiet ' + "\"" + getNextEpisode(complJson) + "\"*")
             complJson['Episode'] = getEpisodeNumber(getNextEpisode(complJson))
             updateComplJson(complJson)
