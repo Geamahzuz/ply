@@ -9,12 +9,15 @@ parser = argparse.ArgumentParser(description="Play some anime my dude", )
 parser.add_argument("-n", "--no-update", help="Prevents updating of complete.json", action="store_false")
 parser.add_argument("-e", "--episode", help="Play a specified episode", nargs=1, metavar="FILE", default=[None])
 parser.add_argument('-c', '--convert', help="Converts episodes into a recognized format", action="store_true")
+parser.add_argument("-d", "--dir", help="sets working directory", nargs=1, metavar="DIR")
 args = parser.parse_args()
 # print(vars(args))
 # print(args.episode[0])
 
 validExt = ['.mkv', '.mp4', '.avi', '.m4v']
 
+if args.dir is not None:
+    os.chdir(args.dir[0])
 
 def getExt(filename):
     basestring = str(filename)
